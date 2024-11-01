@@ -1,4 +1,6 @@
+import os
 import sys
+import hashlib
 
 
 LOWER_CASE = "abcdefghijklmnopqrstuvwxyz"
@@ -29,4 +31,41 @@ def get_charset(default=ALPHA_NUMERIC) -> str:
         else:
             charset = charset_option
 
+        sys.argv.remove("--charset")
+        sys.argv.remove(charset_option)
+
     return charset
+
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+WORDLIST_PATH = os.path.join(SCRIPT_DIR, 'bip39_english.txt')
+
+
+def get_wordlist():
+    with open(WORDLIST_PATH, 'r', encoding='utf-8') as f:
+        wordlist = [word.strip() for word in f.readlines()]
+    wordlist = [word for word in wordlist if word]  # Remove empty lines
+    assert len(wordlist) == 2048
+    return wordlist
+
+
+def generate_string(seed: str, charset: str, length: int) -> str:
+    result = []
+    charset_length = len(charset)
+    current_data = seed
+
+    while len(result) < length:
+        hash_object = hashlib.sha256(current_data.encode())
+        hex_digest = hash_object.hexdigest()
+
+        for i in range(0, len(hex_digest), 2):
+            if len(result) >= length:
+                break
+
+            hex_pair = hex_digest[i:i+2]
+            index = int(hex_pair, 16) % charset_length
+            result.append(charset[index])
+
+        current_data = hex_digest
+
+    return ''.join(result)

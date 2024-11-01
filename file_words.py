@@ -1,25 +1,16 @@
-import os
-import sys
+from base import get_wordlist
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-WORDLIST_PATH = os.path.join(SCRIPT_DIR, 'bip39_english.txt')
-
-def read_wordlist():
-    with open(WORDLIST_PATH, 'r', encoding='utf-8') as f:
-        wordlist = [word.strip() for word in f.readlines()]
-    wordlist = [word for word in wordlist if word]  # Remove empty lines
-    assert len(wordlist) == 2048
-    return wordlist
 
 def file_to_words(filename):
     import struct
-    wordlist = read_wordlist()
+    wordlist = get_wordlist()
     with open(filename, 'rb') as f:
         data = f.read()
 
     # Prepend data length (4 bytes)
     data_length = len(data)
-    data_length_bytes = struct.pack('>I', data_length)  # 4 bytes, big-endian unsigned int
+    # 4 bytes, big-endian unsigned int
+    data_length_bytes = struct.pack('>I', data_length)
     data_with_length = data_length_bytes + data
 
     # Convert data to bits
@@ -36,6 +27,7 @@ def file_to_words(filename):
     words = [wordlist[int(chunk, 2)] for chunk in chunks]
 
     return words
+
 
 def words_to_file(words, output_filename):
     import struct
@@ -62,21 +54,28 @@ def words_to_file(words, output_filename):
     with open(output_filename, 'wb') as f:
         f.write(data)
 
+
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Convert a binary file to words and back.')
+    parser = argparse.ArgumentParser(
+        description='Convert a binary file to words and back.')
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     # Subparser for encoding
-    encode_parser = subparsers.add_parser('encode', help='Encode a file to words')
+    encode_parser = subparsers.add_parser(
+        'encode', help='Encode a file to words')
     encode_parser.add_argument('input_file', help='Input file to encode')
-    encode_parser.add_argument('output_words_file', help='Output file to write words')
+    encode_parser.add_argument(
+        'output_words_file', help='Output file to write words')
 
     # Subparser for decoding
-    decode_parser = subparsers.add_parser('decode', help='Decode words back to file')
-    decode_parser.add_argument('input_words_file', help='Input file containing words')
-    decode_parser.add_argument('output_file', help='Output file to write decoded data')
+    decode_parser = subparsers.add_parser(
+        'decode', help='Decode words back to file')
+    decode_parser.add_argument(
+        'input_words_file', help='Input file containing words')
+    decode_parser.add_argument(
+        'output_file', help='Output file to write decoded data')
 
     args = parser.parse_args()
 
